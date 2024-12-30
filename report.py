@@ -28,12 +28,18 @@ def get_submodules_updated_in_range(repo, start_commit, end_commit):
     current_commit = end_commit_obj
     while current_commit != start_commit_obj:
         for entry in current_commit.tree:
-            if isinstance(entry, pygit2.Submodule):
-                # Check if submodule is updated (by comparing IDs)
-                submodule_name = entry.name
-                submodule = repo.submodules[submodule_name]
+            if entry.type == pygit2.GIT_OBJ_TREE:
+                # Handle regular files or directories (no need to check)
+                continue
+            if entry.type == pygit2.GIT_OBJ_BLOB:
+                # Handle blobs (actual file contents)
+                continue
+
+            if entry.name in repo.submodules:
+                submodule = repo.submodules[entry.name]
+                # Record submodule updates (submodule reference changes)
                 if entry.id != submodule.hex:
-                    updated_submodules[submodule_name] = entry.id.hex  # Record the update
+                    updated_submodules[entry.name] = entry.id.hex  # Record the update
 
         # Move to the previous commit
         if current_commit.parents:
