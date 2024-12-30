@@ -69,7 +69,7 @@ def main(repo_path, start_commit_hash, end_commit_hash):
 
 
 # Example usage
-repo_path = "D:\Haim\git\super"
+repo_path = "D:\\Haim\\git\\super"
 start_commit_hash = "139eaa6a46eed3c4f5f81242a4dd0be8269613a1"  # Replace with actual start commit hash - older
 end_commit_hash = "e3d27ccecae41194a9f16c405afc29dd832e4c7f"  # Replace with actual end commit hash - newer
 
