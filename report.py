@@ -45,26 +45,16 @@ def get_submodules_updated_in_range(repo, start_commit, end_commit):
     while current_commit != start_commit_obj:
         for entry in current_commit.tree:
             if entry.type == pygit2.GIT_OBJECT_TREE:  # Fixed constant name
-                # Handle regular files or directories (no need to check)
-                continue
-            if entry.type == pygit2.GIT_OBJECT_BLOB:
-                # Handle blobs (actual file contents)
-                continue
+                # Check for submodules
+                submodule_path = os.path.join(repo.workdir, entry.name)
+                try:
+                    # Try to open submodule repo
+                    submodule_repo = pygit2.Repository(submodule_path)
+                    submodule_head_id = submodule_repo.head.target.hex
+                except Exception:
+                    # If repo cannot be opened, assume it's a new submodule
+                    submodule_head_id = entry.id.hex
 
-            # Check if entry is a submodule (new or updated)
-            submodule_path = os.path.join(repo.workdir, entry.name)
-
-            # Ensure submodule directory exists
-            if not os.path.exists(submodule_path):
-                os.makedirs(submodule_path)
-
-            try:
-                submodule_repo = pygit2.Repository(submodule_path)
-                submodule_head_id = submodule_repo.head.target.hex
-            except Exception:
-                submodule_head_id = None
-
-            if submodule_head_id:
                 updated_submodules[entry.name] = submodule_head_id
 
         # Move to the previous commit
@@ -94,6 +84,11 @@ def main(repo_path, start_commit_hash, end_commit_hash):
             print(f"Submodule: {submodule_name}, Updated Commit: {updated_commit_id}")
             # Fetch the latest tag for the submodule
             submodule_path = os.path.join(repo.workdir, submodule_name)
+
+            # Initialize submodule repo if not already initialized
+            if not os.path.exists(submodule_path):
+                os.makedirs(submodule_path)
+
             latest_tag = get_latest_tag_for_submodule(submodule_path)
             if latest_tag:
                 print(f"Latest Tag for {submodule_name}: {latest_tag}")
