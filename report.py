@@ -1,13 +1,12 @@
 import pygit2
 
 
-def get_latest_tag_for_submodule(repo, submodule_path):
+def get_latest_tag_for_submodule(submodule_path):
     """
     Get the latest tag for a submodule in the repository.
     """
-    submodule_repo_path = repo.workdir + submodule_path
     try:
-        submodule_repo = pygit2.Repository(submodule_repo_path)
+        submodule_repo = pygit2.Repository(submodule_path)
     except Exception as e:
         print(f"Error accessing submodule {submodule_path}: {e}")
         return None
@@ -47,14 +46,15 @@ def get_submodules_updated_in_range(repo, start_commit, end_commit):
                 continue
 
             # Check if entry is a submodule (new or updated)
-            if entry.name in repo.submodules:
-                submodule = repo.submodules[entry.name]
-                # Compare the commit ID of the submodule with its current HEAD ID
-                if entry.id != submodule.head_id:  # Fixed attribute
-                    updated_submodules[entry.name] = entry.id.hex  # Record the update
-            else:
-                # Newly added submodule
-                updated_submodules[entry.name] = entry.id.hex
+            submodule_path = repo.workdir + entry.name
+            try:
+                submodule_repo = pygit2.Repository(submodule_path)
+                submodule_head_id = submodule_repo.head.target.hex
+            except Exception:
+                submodule_head_id = None
+
+            if submodule_head_id:
+                updated_submodules[entry.name] = submodule_head_id
 
         # Move to the previous commit
         if current_commit.parents:
@@ -82,7 +82,8 @@ def main(repo_path, start_commit_hash, end_commit_hash):
         for submodule_name, updated_commit_id in updated_submodules.items():
             print(f"Submodule: {submodule_name}, Updated Commit: {updated_commit_id}")
             # Fetch the latest tag for the submodule
-            latest_tag = get_latest_tag_for_submodule(repo, submodule_name)
+            submodule_path = repo.workdir + submodule_name
+            latest_tag = get_latest_tag_for_submodule(submodule_path)
             if latest_tag:
                 print(f"Latest Tag for {submodule_name}: {latest_tag}")
             else:
