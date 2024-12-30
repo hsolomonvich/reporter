@@ -28,12 +28,13 @@ def get_submodules_updated_in_range(repo, start_commit, end_commit):
     current_commit = end_commit_obj
     while current_commit != start_commit_obj:
         for entry in current_commit.tree:
-            if entry.mode == pygit2.GIT_OBJ_COMMIT:
-                continue  # Skip non-submodule entries
-            if entry.name in repo.submodules:
-                submodule = repo.submodules[entry.name]
+            if isinstance(entry, pygit2.Submodule):
+                # Check if submodule is updated (by comparing IDs)
+                submodule_name = entry.name
+                submodule = repo.submodules[submodule_name]
                 if entry.id != submodule.hex:
-                    updated_submodules[entry.name] = entry.id.hex  # Record the update
+                    updated_submodules[submodule_name] = entry.id.hex  # Record the update
+
         # Move to the previous commit
         if current_commit.parents:
             current_commit = current_commit.parents[0]
@@ -41,6 +42,31 @@ def get_submodules_updated_in_range(repo, start_commit, end_commit):
             break
 
     return updated_submodules
+
+
+def main(repo_path, start_commit_hash, end_commit_hash):
+    # Open the repository
+    repo = pygit2.Repository(repo_path)
+
+    # Get the start and end commits
+    start_commit = start_commit_hash
+    end_commit = end_commit_hash
+
+    # Get submodules updated in the specified commit range
+    updated_submodules = get_submodules_updated_in_range(repo, start_commit, end_commit)
+
+    print(f"Submodules updated between commits {start_commit} and {end_commit}:")
+
+    for submodule_name, updated_commit_id in updated_submodules.items():
+        print(f"Submodule: {submodule_name}, Updated Commit: {updated_commit_id}")
+        # Fetch the latest tag for the submodule
+        latest_tag = get_latest_tag_for_submodule(repo, submodule_name)
+        if latest_tag:
+            print(f"Latest Tag for {submodule_name}: {latest_tag}")
+        else:
+            print(f"No tags found for submodule: {submodule_name}")
+        print('---')
+
 
 
 def main(repo_path, start_commit_hash, end_commit_hash):
