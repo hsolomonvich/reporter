@@ -69,31 +69,6 @@ def main(repo_path, start_commit_hash, end_commit_hash):
 
 
 
-def main(repo_path, start_commit_hash, end_commit_hash):
-    # Open the repository
-    repo = pygit2.Repository(repo_path)
-
-    # Get the start and end commits
-    start_commit = start_commit_hash
-    end_commit = end_commit_hash
-
-    # Get submodules updated in the specified commit range
-    updated_submodules = get_submodules_updated_in_range(repo, start_commit, end_commit)
-
-    print(f"Submodules updated between commits {start_commit} and {end_commit}:")
-
-    for submodule_name, updated_commit_id in updated_submodules.items():
-        print(f"Submodule: {submodule_name}, Updated Commit: {updated_commit_id}")
-        # Fetch the latest tag for the submodule
-        latest_tag = get_latest_tag_for_submodule(repo, submodule_name)
-        if latest_tag:
-            print(f"Latest Tag for {submodule_name}: {latest_tag}")
-        else:
-            print(f"No tags found for submodule: {submodule_name}")
-        print('---')
-
-
-
 # Example usage
 repo_path = "D:\\Haim\\git\\super"
 start_commit_hash = "139eaa6a46eed3c4f5f81242a4dd0be8269613a1"  # Replace with actual start commit hash - older
