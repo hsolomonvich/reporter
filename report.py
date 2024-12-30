@@ -1,4 +1,5 @@
 import pygit2
+import os
 
 
 def get_latest_tag_for_submodule(submodule_path):
@@ -6,6 +7,11 @@ def get_latest_tag_for_submodule(submodule_path):
     Get the latest tag for a submodule in the repository.
     """
     try:
+        # Ensure the submodule path exists and is initialized
+        if not os.path.exists(submodule_path):
+            print(f"Submodule path does not exist: {submodule_path}")
+            return None
+
         submodule_repo = pygit2.Repository(submodule_path)
     except Exception as e:
         print(f"Error accessing submodule {submodule_path}: {e}")
@@ -46,7 +52,12 @@ def get_submodules_updated_in_range(repo, start_commit, end_commit):
                 continue
 
             # Check if entry is a submodule (new or updated)
-            submodule_path = repo.workdir + entry.name
+            submodule_path = os.path.join(repo.workdir, entry.name)
+
+            # Ensure submodule directory exists
+            if not os.path.exists(submodule_path):
+                os.makedirs(submodule_path)
+
             try:
                 submodule_repo = pygit2.Repository(submodule_path)
                 submodule_head_id = submodule_repo.head.target.hex
@@ -82,7 +93,7 @@ def main(repo_path, start_commit_hash, end_commit_hash):
         for submodule_name, updated_commit_id in updated_submodules.items():
             print(f"Submodule: {submodule_name}, Updated Commit: {updated_commit_id}")
             # Fetch the latest tag for the submodule
-            submodule_path = repo.workdir + submodule_name
+            submodule_path = os.path.join(repo.workdir, submodule_name)
             latest_tag = get_latest_tag_for_submodule(submodule_path)
             if latest_tag:
                 print(f"Latest Tag for {submodule_name}: {latest_tag}")
